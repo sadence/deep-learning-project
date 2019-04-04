@@ -9,13 +9,13 @@ import time
 from parse_fics import Fanfic
 
 # Hyper params
-seq_length = 50
-batch_size = 256
+seq_length = 200
+batch_size = 100
 input_size = 1
-hidden_size = 150
+hidden_size = 100
 num_layers = 2
 num_epochs = 20
-learning_rate = 0.004
+learning_rate = 0.01
 dropout = 0
 
 class LSTMNet(torch.nn.Module):
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     # Load Fanfics, 49999 in total
     with open("./fics.pkl", 'rb') as file: 
         fics = pickle.load(file)
-        fics = fics[:2] # begin with only this much
+        fics = fics[:1] # begin with only this much
 
     # Prepare Vocabulary 
     for fic in fics:
@@ -94,9 +94,13 @@ if __name__ == "__main__":
 
     nb_classes = n_vocab
 
+    ### Neural Network
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Device being used is {device}')
 
+    # Store the loss for each epoch
+    total_loss = []
 
     model = LSTMNet(input_size, hidden_size, num_layers, nb_classes, device, dropout).to(device)
     # model = BiLSTMNet(input_size, hidden_size, num_layers, num_classes).to(device)
@@ -115,6 +119,7 @@ if __name__ == "__main__":
     start = time.time()
 
     for epoch in range(num_epochs):
+        epoch_loss = 0
         for i, (seq, lab) in enumerate(train_loader):
             
             # seq = seq.to(device)
@@ -129,9 +134,13 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            epoch_loss += loss.item()
             if (i+1) % 100 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f} ({:.2f} s)'
                 .format(epoch+1, num_epochs, i+1, total_step,
                 loss.item(), time.time()-start))
+        total_loss.append(epoch_loss / total_step)
+
+    print(f"Loss for each epoch: {total_loss}")
 
     torch.save(model.state_dict(), "./model-state.torch")

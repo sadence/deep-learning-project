@@ -9,14 +9,14 @@ import sys
 
 # Hyper params
 seq_length = 100
-batch_size = 128
+batch_size = 100
 input_size = 1
-hidden_size = 150
+hidden_size = 100
 num_layers = 2
-num_epochs = 100
+num_epochs = 20
 learning_rate = 0.01
-dropout = 0.1
-nb_classes = 75
+dropout = 0
+nb_classes = 76
 
 
 model = LSTMNet(input_size, hidden_size, num_layers, nb_classes, 'cpu', dropout)
@@ -33,7 +33,7 @@ char_to_int = {}
 # Load Fanfics, 49999 in total
 with open("./fics.pkl", 'rb') as file: 
     fics = pickle.load(file)
-    fics = fics[:2] # begin with only this much
+    fics = fics[:1] # begin with only this much
 
 # Prepare Vocabulary 
 for fic in fics:
