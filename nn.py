@@ -1,8 +1,9 @@
 import pickle
-from torch import nn
+from torch import nn, Variable
+import torch
 import numpy as np
 
-glove_path = "./glove.1"
+glove_path = "./glove"
 
 words = pickle.load(open(f'{glove_path}/6B.50_words.pkl', 'rb')) # there are 400k words
 glove = pickle.load(open(f'{glove_path}/6B.glove_dict.pkl', 'rb')) # length 50 embedding
@@ -13,6 +14,7 @@ target_vocab = words
 matrix_len = len(target_vocab)
 weights_matrix = np.zeros((matrix_len, 50))
 words_found = 0
+emb_dim = 50
 
 for i, word in enumerate(target_vocab):
     try: 

@@ -2,7 +2,7 @@ import bcolz
 import pickle
 import numpy as np
 
-glove_path = "./glove.1"
+glove_path = "./glove"
 
 words = []
 idx = 0

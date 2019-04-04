@@ -1,7 +1,7 @@
 import bcolz
 import pickle
 
-glove_path = "./glove.1"
+glove_path = "./glove"
 
 vectors = bcolz.open(f'{glove_path}/6B.50.dat')[:]
 words = pickle.load(open(f'{glove_path}/6B.50_words.pkl', 'rb'))

@@ -9,24 +9,23 @@ import time
 from parse_fics import Fanfic
 
 # Hyper params
-seq_length = 100
-batch_size = 100
+seq_length = 50
+batch_size = 256
 input_size = 1
-hidden_size = 128
+hidden_size = 150
 num_layers = 2
-num_epochs = 1
-learning_rate = 0.005
-
-
+num_epochs = 20
+learning_rate = 0.004
+dropout = 0
 
 class LSTMNet(torch.nn.Module):
 
-    def __init__(self,in_size,hidden_size, nb_layer, nb_classes, device):
+    def __init__(self,in_size,hidden_size, nb_layer, nb_classes, device, dropout):
         super(LSTMNet,self).__init__()
         self.hidden_size = hidden_size
         self.nb_layer = nb_layer
         self.nb_classes = nb_classes
-        self.lstm = torch.nn.LSTM(in_size, hidden_size, nb_layer, batch_first=True)
+        self.lstm = torch.nn.LSTM(in_size, hidden_size, nb_layer, batch_first=True, dropout = dropout)
         self.fc = torch.nn.Linear(hidden_size, nb_classes)
         self.device = device
 
@@ -51,7 +50,7 @@ if __name__ == "__main__":
     # Load Fanfics, 49999 in total
     with open("./fics.pkl", 'rb') as file: 
         fics = pickle.load(file)
-        fics = fics[:1] # begin with only this much
+        fics = fics[:2] # begin with only this much
 
     # Prepare Vocabulary 
     for fic in fics:
@@ -99,10 +98,10 @@ if __name__ == "__main__":
     print(f'Device being used is {device}')
 
 
-    model = LSTMNet(input_size, hidden_size, num_layers, nb_classes, device).to(device)
+    model = LSTMNet(input_size, hidden_size, num_layers, nb_classes, device, dropout).to(device)
     # model = BiLSTMNet(input_size, hidden_size, num_layers, num_classes).to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr = 0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
     loss_fn = nn.CrossEntropyLoss()
 
     train_loader = torch.utils.data.DataLoader(

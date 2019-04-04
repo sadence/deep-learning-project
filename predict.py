@@ -7,17 +7,19 @@ import numpy as np
 import pickle
 import sys
 
+# Hyper params
 seq_length = 100
-batch_size = 100
+batch_size = 128
 input_size = 1
-hidden_size = 128
+hidden_size = 150
 num_layers = 2
-num_epochs = 1
-learning_rate = 0.005
-nb_classes = 74
+num_epochs = 100
+learning_rate = 0.01
+dropout = 0.1
+nb_classes = 75
 
 
-model = LSTMNet(input_size, hidden_size, num_layers, nb_classes, 'cpu')
+model = LSTMNet(input_size, hidden_size, num_layers, nb_classes, 'cpu', dropout)
 model.load_state_dict(torch.load("./model-state.torch"))
 model.eval()
 
@@ -31,7 +33,7 @@ char_to_int = {}
 # Load Fanfics, 49999 in total
 with open("./fics.pkl", 'rb') as file: 
     fics = pickle.load(file)
-    fics = fics[:1] # begin with only this much
+    fics = fics[:2] # begin with only this much
 
 # Prepare Vocabulary 
 for fic in fics:
@@ -78,10 +80,15 @@ with torch.no_grad():
         x = np.reshape(pattern, (-1, seq_length, input_size))
         x = x / float(n_vocab)
         x = torch.as_tensor(x, dtype=torch.float)
-        out = model(x)
-        index = np.argmax(out).item() # read value of 1d tensor
+        out = model(x).view(nb_classes)
+        # index = np.argmax(out).item() # read value of 1d tensor
+        # print(out.shape)
+        # print(out)
+        # top_indexes = torch.topk(out, 5, largest=True)
+        probs = torch.nn.functional.softmax(out, 0)
+        # index = np.random.choice(top_indexes[1])
+        index = np.random.choice(np.arange(0,nb_classes), p=probs.numpy())
         result = int_to_char[index]
-        
         seq_in = [int_to_char[value] for value in pattern]
         sys.stdout.write(result)
         pattern.append(index)
