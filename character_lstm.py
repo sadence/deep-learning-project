@@ -11,7 +11,7 @@ from parse_fics import Fanfic
 # Hyper params
 seq_length = 200
 batch_size = 100
-input_size = 30
+input_size = 80
 hidden_size = 100
 num_layers = 2
 num_epochs = 1
