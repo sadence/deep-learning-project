@@ -155,4 +155,5 @@ if __name__ == "__main__":
 
     print(f"Loss for each epoch: {total_loss}")
 
-    torch.save(model.state_dict(), "./model-state.torch")
+    torch.save(model.state_dict(
+    ), f'./model-state-{seq_length}-{batch_size}-{input_size}-{hidden_size}-{num_layers}-{num_epochs}-{learning_rate}-{dropout}.torch')

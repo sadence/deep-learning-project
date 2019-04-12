@@ -2,6 +2,7 @@ import torch
 
 from parse_fics import Fanfic
 from character_lstm import LSTMNet
+from bleu import compute_bleu
 
 import numpy as np
 import pickle
@@ -11,17 +12,21 @@ import sys
 seq_length = 200
 batch_size = 100
 input_size = 80
-hidden_size = 100
+hidden_size = 256
 num_layers = 2
-num_epochs = 1
-learning_rate = 0.01
+num_epochs = 20
+learning_rate = 0.00146
 dropout = 0
+
 nb_classes = 74
 
 
 model = LSTMNet(input_size, hidden_size, num_layers,
                 nb_classes, 'cpu', dropout)
-model.load_state_dict(torch.load("./model-state.torch"))
+
+# open on cpu
+model.load_state_dict(torch.load("./model-state.torch",
+                                 map_location=lambda storage, loc: storage))
 model.eval()
 
 
@@ -79,6 +84,7 @@ print(''.join([int_to_char[value] for value in pattern]))
 
 with torch.no_grad():
     # generate characters
+    generated_text = []
     for i in range(1000):
         x = np.reshape(pattern, (-1, seq_length, 1))
         x = torch.as_tensor(x, dtype=torch.int64)
@@ -91,8 +97,12 @@ with torch.no_grad():
         # index = np.random.choice(top_indexes[1])
         index = np.random.choice(np.arange(0, nb_classes), p=probs.numpy())
         result = int_to_char[index]
+        generated_text.append(result)
         seq_in = [int_to_char[value] for value in pattern]
         sys.stdout.write(result)
         pattern.append(index)
         pattern = pattern[1:len(pattern)]
     print("\nDone.")
+    # print(compute_bleu(fics, str(generated_text))
+    generated_text = ''.join(generated_text)
+    print(compute_bleu(fics, generated_text, character_level=False))
