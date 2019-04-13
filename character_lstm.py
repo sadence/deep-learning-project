@@ -159,6 +159,8 @@ if __name__ == "__main__":
             model, pattern, seq_length, character_level=False)
         bleu_scores.append(bleu)
         total_loss.append(epoch_loss / total_step)
+        print(f'Loss for the epoch: {epoch_loss / total_step}')
+        print(f'One BLEU score: {bleu}')
 
     print(f"Loss for each epoch: {total_loss}")
     print(f"One bleu score for each epoch: {bleu_scores}")
