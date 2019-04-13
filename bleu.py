@@ -20,7 +20,7 @@ def fetch_data(fics, generated_text):
 
 
 def count_ngram(candidate, references, n, character_level):
-    print(f'char level: {character_level}')
+    # print(f'char level: {character_level}')
     clipped_count = 0
     count = 0
     r = 0
@@ -58,8 +58,8 @@ def count_ngram(candidate, references, n, character_level):
             words = list(cand_sentence.strip())
         else:
             words = cand_sentence.strip().split()
-        print(f'cand sentence: {cand_sentence}')
-        print(f'words: {words}')
+        # print(f'cand sentence: {cand_sentence}')
+        # print(f'words: {words}')
         limits = len(words) - n + 1
         for i in range(0, limits):
             if character_level:
@@ -75,7 +75,7 @@ def count_ngram(candidate, references, n, character_level):
         count += limits
         r += best_length_match(ref_lengths, len(words))
         c += len(words)
-        print(cand_dict)
+        # print(cand_dict)
     if clipped_count == 0:
         pr = 0
     else:
