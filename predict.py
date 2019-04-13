@@ -24,7 +24,7 @@ def to_one_hot(i, total_classes):
     return np.eye(total_classes)[i]
 
 
-def predict_bleu(model, pattern, seq_length, character_level=False):
+def predict_bleu(model, pattern, seq_length, device, character_level=False):
     """
     Generate text and compute BLEU
     """
@@ -32,7 +32,7 @@ def predict_bleu(model, pattern, seq_length, character_level=False):
         generated_text = []
         for i in range(1000):
             x = np.reshape(pattern, (-1, seq_length, 1))
-            x = torch.as_tensor(x, dtype=torch.int64)
+            x = torch.as_tensor(x, dtype=torch.int64).to(device=device)
             out = model(x).view(nb_classes)
             # index = np.argmax(out).item() # read value of 1d tensor
             # print(out.shape)
