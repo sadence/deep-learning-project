@@ -131,14 +131,14 @@ if __name__ == "__main__":
         for i in range(1000):
             x = np.reshape(pattern, (-1, seq_length, 1))
             x = torch.as_tensor(x, dtype=torch.int64)
-            out = model(x).view(nb_classes)
+            out = model(x).view(n_vocab)
             # index = np.argmax(out).item() # read value of 1d tensor
             # print(out.shape)
             # print(out)
             # top_indexes = torch.topk(out, 5, largest=True)
             probs = torch.nn.functional.softmax(out, 0)
             # index = np.random.choice(top_indexes[1])
-            index = np.random.choice(np.arange(0, nb_classes), p=probs.numpy())
+            index = np.random.choice(np.arange(0, n_vocab), p=probs.numpy())
             result = int_to_char[index]
             generated_text.append(result)
             seq_in = [int_to_char[value] for value in pattern]
