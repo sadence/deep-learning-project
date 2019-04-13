@@ -24,7 +24,7 @@ def to_one_hot(i, total_classes):
     return np.eye(total_classes)[i]
 
 
-def predict_bleu(model, seed, seq_length, character_level=False):
+def predict_bleu(model, pattern, seq_length, character_level=False):
     """
     Generate text and compute BLEU
     """
