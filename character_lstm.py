@@ -1,4 +1,5 @@
 import pickle
+import configparser
 
 from torch import nn
 import torch
@@ -10,14 +11,21 @@ from parse_fics import Fanfic
 from predict import predict_bleu
 
 # Hyper params
-seq_length = 200
-batch_size = 100
-input_size = 80
-hidden_size = 100
-num_layers = 2
-num_epochs = 1
-learning_rate = 0.01
-dropout = 0
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+config = dict(config['DEFAULT'])
+
+
+def num(s):
+    try:
+        return int(s)
+    except ValueError:
+        return float(s)
+
+
+for key in config:
+    config[key] = num(config[key])
 
 
 class LSTMNet(torch.nn.Module):
@@ -33,10 +41,10 @@ class LSTMNet(torch.nn.Module):
         self.fc = torch.nn.Linear(hidden_size, nb_classes)
         self.device = device
 
-    def forward(self, x, batch_size=batch_size):
+    def forward(self, x, batch_size=config['batch_size']):
         # print(f'x: {x.shape}')
         # -1 corresponds to batch size (but is smaller for last batch)
-        x = self.emb(x).view(-1, seq_length, input_size)
+        x = self.emb(x).view(-1, config['seq_length'], config['input_size'])
         # initial states
         # print(f'x: {x.shape}')
         h0 = torch.zeros(self.nb_layer, x.size(
@@ -78,6 +86,8 @@ if __name__ == "__main__":
     dataX = []
     dataY = []
 
+    seq_length = config['seq_length']
+
     # TODO: instead of raw body, sanitize the data
     for j, fic in enumerate(fics):
         print(f"Building samples {j}, {len(fic.body)}")
@@ -113,23 +123,24 @@ if __name__ == "__main__":
     total_loss = []
     bleu_scores = []
 
-    model = LSTMNet(input_size, hidden_size, num_layers,
-                    nb_classes, device, dropout).to(device)
+    model = LSTMNet(config['input_size'], config['hidden_size'], config['num_layers'],
+                    nb_classes, device, config['dropout']).to(device)
     # model = BiLSTMNet(input_size, hidden_size, num_layers, num_classes).to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=config['learning_rate'])
     loss_fn = nn.CrossEntropyLoss()
 
     train_loader = torch.utils.data.DataLoader(
         dataset=dataset,
-        batch_size=batch_size,
+        batch_size=config['batch_size'],
         shuffle=True)
 
     # training
     total_step = len(train_loader)
     start = time.time()
 
-    for epoch in range(num_epochs):
+    for epoch in range(config['num_epochs']):
         epoch_loss = 0
         for i, (seq, lab) in enumerate(train_loader):
 
@@ -151,7 +162,7 @@ if __name__ == "__main__":
             epoch_loss += loss.item()
             if (i+1) % 100 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f} ({:.2f} s)'
-                      .format(epoch+1, num_epochs, i+1, total_step,
+                      .format(epoch+1, config['num_epochs'], i+1, total_step,
                               loss.item(), time.time()-start))
         start = np.random.randint(0, len(dataX)-1)
         pattern = list(dataX[start])
@@ -165,5 +176,15 @@ if __name__ == "__main__":
     print(f"Loss for each epoch: {total_loss}")
     print(f"One bleu score for each epoch: {bleu_scores}")
 
-    torch.save(model.state_dict(
-    ), f'./model-state-{seq_length}-{batch_size}-{input_size}-{hidden_size}-{num_layers}-{num_epochs}-{learning_rate}-{dropout}.torch')
+    file_name = './model-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
+        config['seq_length'],
+        config['batch_size'],
+        config['input_size'],
+        config['hidden_size'],
+        config['num_layers'],
+        config['num_epochs'],
+        config['learning_rate'],
+        config['dropout']
+    )
+
+    torch.save(model.state_dict(), file_name)

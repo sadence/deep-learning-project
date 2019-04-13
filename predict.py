@@ -5,19 +5,8 @@ from bleu import compute_bleu
 
 import numpy as np
 import pickle
+import configparser
 import sys
-
-# Hyper params
-seq_length = 200
-batch_size = 100
-input_size = 80
-hidden_size = 256
-num_layers = 2
-num_epochs = 20
-learning_rate = 0.00146
-dropout = 0
-
-nb_classes = 74
 
 
 def to_one_hot(i, total_classes):
@@ -28,6 +17,7 @@ def predict_bleu(model, pattern, seq_length, device, int_to_char, character_leve
     """
     Generate text and compute BLEU
     """
+    nb_classes = len(int_to_char)
     with torch.no_grad():
         generated_text = []
         for i in range(1000):
@@ -54,13 +44,19 @@ def predict_bleu(model, pattern, seq_length, device, int_to_char, character_leve
 if __name__ == "__main__":
     from character_lstm import LSTMNet
 
-    model = LSTMNet(input_size, hidden_size, num_layers,
-                    nb_classes, 'cpu', dropout)
+    config = configparser.ConfigParser()
+    config.read('config.ini')
 
-    # open on cpu
-    model.load_state_dict(torch.load("./model-state.torch",
-                                     map_location=lambda storage, loc: storage))
-    model.eval()
+    config = config['DEFAULT']
+
+    seq_length = int(config['seq_length'])
+    batch_size = int(config['batch_size'])
+    input_size = int(config['input_size'])
+    hidden_size = int(config['hidden_size'])
+    num_layers = int(config['num_layers'])
+    num_epochs = int(config['num_epochs'])
+    learning_rate = float(config['learning_rate'])
+    dropout = float(config['dropout'])
 
     fics = []
     chars = set()
@@ -109,6 +105,25 @@ if __name__ == "__main__":
     pattern = list(dataX[start])
     print("Seed:")
     print(''.join([int_to_char[value] for value in pattern]))
+
+    model = LSTMNet(input_size, hidden_size, num_layers,
+                    n_vocab, 'cpu', dropout)
+
+    file_name = './model-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
+        config['seq_length'],
+        config['batch_size'],
+        config['input_size'],
+        config['hidden_size'],
+        config['num_layers'],
+        config['num_epochs'],
+        config['learning_rate'],
+        config['dropout']
+    )
+
+    # open on cpu
+    model.load_state_dict(torch.load(
+        file_name, map_location=lambda storage, loc: storage))
+    model.eval()
 
     with torch.no_grad():
         # generate characters
