@@ -34,7 +34,7 @@ def predict_bleu(model, pattern, seq_length, device, int_to_char, fics, characte
                 np.arange(0, nb_classes), p=probs.to(device='cpu').numpy())
             result = int_to_char[index]
             generated_text.append(result)
-            seq_in = [int_to_char[value] for value in pattern]
+            seq_in = [int_to_char[value.item()] for value in pattern]
             pattern.append(index)
             pattern = pattern[1:len(pattern)]
         generated_text = ''.join(generated_text)
