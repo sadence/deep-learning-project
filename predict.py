@@ -24,7 +24,7 @@ def to_one_hot(i, total_classes):
     return np.eye(total_classes)[i]
 
 
-def predict_bleu(model, pattern, seq_length, device, character_level=False):
+def predict_bleu(model, pattern, seq_length, device, int_to_char, character_level=False):
     """
     Generate text and compute BLEU
     """
@@ -40,7 +40,8 @@ def predict_bleu(model, pattern, seq_length, device, character_level=False):
             # top_indexes = torch.topk(out, 5, largest=True)
             probs = torch.nn.functional.softmax(out, 0)
             # index = np.random.choice(top_indexes[1])
-            index = np.random.choice(np.arange(0, nb_classes), p=probs.numpy())
+            index = np.random.choice(
+                np.arange(0, nb_classes), p=probs.to(device='cpu').numpy())
             result = int_to_char[index]
             generated_text.append(result)
             seq_in = [int_to_char[value] for value in pattern]
