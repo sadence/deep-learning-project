@@ -1,7 +1,6 @@
 import torch
 
 from parse_fics import Fanfic
-from character_lstm import LSTMNet
 from bleu import compute_bleu
 
 import numpy as np
@@ -21,88 +20,116 @@ dropout = 0
 nb_classes = 74
 
 
-model = LSTMNet(input_size, hidden_size, num_layers,
-                nb_classes, 'cpu', dropout)
-
-# open on cpu
-model.load_state_dict(torch.load("./model-state.torch",
-                                 map_location=lambda storage, loc: storage))
-model.eval()
-
-
 def to_one_hot(i, total_classes):
     return np.eye(total_classes)[i]
 
 
-fics = []
-chars = set()
-char_to_int = {}
+def predict_bleu(model, seed, seq_length, character_level=False):
+    """
+    Generate text and compute BLEU
+    """
+    with torch.no_grad():
+        generated_text = []
+        for i in range(1000):
+            x = np.reshape(pattern, (-1, seq_length, 1))
+            x = torch.as_tensor(x, dtype=torch.int64)
+            out = model(x).view(nb_classes)
+            # index = np.argmax(out).item() # read value of 1d tensor
+            # print(out.shape)
+            # print(out)
+            # top_indexes = torch.topk(out, 5, largest=True)
+            probs = torch.nn.functional.softmax(out, 0)
+            # index = np.random.choice(top_indexes[1])
+            index = np.random.choice(np.arange(0, nb_classes), p=probs.numpy())
+            result = int_to_char[index]
+            generated_text.append(result)
+            seq_in = [int_to_char[value] for value in pattern]
+            pattern.append(index)
+            pattern = pattern[1:len(pattern)]
+        generated_text = ''.join(generated_text)
+        return generated_text, compute_bleu(fics, generated_text, character_level)
 
-# Load Fanfics, 49999 in total
-with open("./fics.pkl", 'rb') as file:
-    fics = pickle.load(file)
-    fics = fics[:1]  # begin with only this much
 
-# Prepare Vocabulary
-for fic in fics:
-    chars.update(set(fic.body))
+if __name__ == "__main__":
+    from character_lstm import LSTMNet
 
-chars = sorted(list(chars))
-char_to_int = dict((c, i) for i, c in enumerate(chars))
-int_to_char = dict((i, c) for i, c in enumerate(chars))
-n_vocab = len(chars)
-n_chars = 0
+    model = LSTMNet(input_size, hidden_size, num_layers,
+                    nb_classes, 'cpu', dropout)
 
-print(f"Total Vocabulary: {n_vocab} words: \n{chars}")
+    # open on cpu
+    model.load_state_dict(torch.load("./model-state.torch",
+                                     map_location=lambda storage, loc: storage))
+    model.eval()
 
-# Prepare Training Data
-dataX = []
-dataY = []
+    fics = []
+    chars = set()
+    char_to_int = {}
 
-# TODO: instead of raw body, sanitize the data
-for j, fic in enumerate(fics):
-    print(f"Building samples {j}, {len(fic.body)}")
-    n_chars += len(fic.body)
-    for i in range(0, len(fic.body) - seq_length, 1):
-        seq_in = fic.body[i: i + seq_length]
-        seq_out = fic.body[i + seq_length]
-        dataX.append([char_to_int[char] for char in seq_in])
-        dataY.append(char_to_int[seq_out])
+    # Load Fanfics, 49999 in total
+    with open("./fics.pkl", 'rb') as file:
+        fics = pickle.load(file)
+        fics = fics[:1]  # begin with only this much
 
-n_patters = len(dataX)
-print(f"Total patterns: {n_patters}")
+    # Prepare Vocabulary
+    for fic in fics:
+        chars.update(set(fic.body))
 
-y = to_one_hot(dataY, n_vocab)
+    chars = sorted(list(chars))
+    char_to_int = dict((c, i) for i, c in enumerate(chars))
+    int_to_char = dict((i, c) for i, c in enumerate(chars))
+    n_vocab = len(chars)
+    n_chars = 0
 
-dataX = np.array(dataX)
-# dataX = torch.as_tensor(dataX, dtype=torch.float)
+    print(f"Total Vocabulary: {n_vocab} words: \n{chars}")
 
-start = np.random.randint(0, len(dataX)-1)
-pattern = list(dataX[start])
-print("Seed:")
-print(''.join([int_to_char[value] for value in pattern]))
+    # Prepare Training Data
+    dataX = []
+    dataY = []
 
-with torch.no_grad():
-    # generate characters
-    generated_text = []
-    for i in range(1000):
-        x = np.reshape(pattern, (-1, seq_length, 1))
-        x = torch.as_tensor(x, dtype=torch.int64)
-        out = model(x).view(nb_classes)
-        # index = np.argmax(out).item() # read value of 1d tensor
-        # print(out.shape)
-        # print(out)
-        # top_indexes = torch.topk(out, 5, largest=True)
-        probs = torch.nn.functional.softmax(out, 0)
-        # index = np.random.choice(top_indexes[1])
-        index = np.random.choice(np.arange(0, nb_classes), p=probs.numpy())
-        result = int_to_char[index]
-        generated_text.append(result)
-        seq_in = [int_to_char[value] for value in pattern]
-        sys.stdout.write(result)
-        pattern.append(index)
-        pattern = pattern[1:len(pattern)]
-    print("\nDone.")
-    # print(compute_bleu(fics, str(generated_text))
-    generated_text = ''.join(generated_text)
-    print(compute_bleu(fics, generated_text, character_level=False))
+    # TODO: instead of raw body, sanitize the data
+    for j, fic in enumerate(fics):
+        print(f"Building samples {j}, {len(fic.body)}")
+        n_chars += len(fic.body)
+        for i in range(0, len(fic.body) - seq_length, 1):
+            seq_in = fic.body[i: i + seq_length]
+            seq_out = fic.body[i + seq_length]
+            dataX.append([char_to_int[char] for char in seq_in])
+            dataY.append(char_to_int[seq_out])
+
+    n_patters = len(dataX)
+    print(f"Total patterns: {n_patters}")
+
+    y = to_one_hot(dataY, n_vocab)
+
+    dataX = np.array(dataX)
+    # dataX = torch.as_tensor(dataX, dtype=torch.float)
+
+    start = np.random.randint(0, len(dataX)-1)
+    pattern = list(dataX[start])
+    print("Seed:")
+    print(''.join([int_to_char[value] for value in pattern]))
+
+    with torch.no_grad():
+        # generate characters
+        generated_text = []
+        for i in range(1000):
+            x = np.reshape(pattern, (-1, seq_length, 1))
+            x = torch.as_tensor(x, dtype=torch.int64)
+            out = model(x).view(nb_classes)
+            # index = np.argmax(out).item() # read value of 1d tensor
+            # print(out.shape)
+            # print(out)
+            # top_indexes = torch.topk(out, 5, largest=True)
+            probs = torch.nn.functional.softmax(out, 0)
+            # index = np.random.choice(top_indexes[1])
+            index = np.random.choice(np.arange(0, nb_classes), p=probs.numpy())
+            result = int_to_char[index]
+            generated_text.append(result)
+            seq_in = [int_to_char[value] for value in pattern]
+            sys.stdout.write(result)
+            pattern.append(index)
+            pattern = pattern[1:len(pattern)]
+        print("\nDone.")
+        # print(compute_bleu(fics, str(generated_text))
+        generated_text = ''.join(generated_text)
+        print(compute_bleu(fics, generated_text, character_level=False))

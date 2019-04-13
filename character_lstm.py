@@ -7,6 +7,7 @@ import numpy as np
 import time
 
 from parse_fics import Fanfic
+from predict import predict_bleu
 
 # Hyper params
 seq_length = 200
@@ -110,6 +111,7 @@ if __name__ == "__main__":
 
     # Store the loss for each epoch
     total_loss = []
+    bleu_scores = []
 
     model = LSTMNet(input_size, hidden_size, num_layers,
                     nb_classes, device, dropout).to(device)
@@ -151,9 +153,15 @@ if __name__ == "__main__":
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f} ({:.2f} s)'
                       .format(epoch+1, num_epochs, i+1, total_step,
                               loss.item(), time.time()-start))
+        start = np.random.randint(0, len(dataX)-1)
+        pattern = list(dataX[start])
+        gen_text, bleu = predict_bleu(
+            model, pattern, seq_length, character_level=False)
+        bleu_scores.append(bleu)
         total_loss.append(epoch_loss / total_step)
 
     print(f"Loss for each epoch: {total_loss}")
+    print(f"One bleu score for each epoch: {bleu_scores}")
 
     torch.save(model.state_dict(
     ), f'./model-state-{seq_length}-{batch_size}-{input_size}-{hidden_size}-{num_layers}-{num_epochs}-{learning_rate}-{dropout}.torch')
