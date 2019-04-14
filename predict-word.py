@@ -78,7 +78,7 @@ if __name__ == "__main__":
     start = np.random.randint(0, len(dataX)-1)
     pattern = list(dataX[start])
     print("Seed:")
-    print(''.join([model.glove.itos[value] for value in pattern]))
+    print(' '.join([model.glove.itos[value] for value in pattern]))
 
     file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
         config['seq_length'],
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         for i in range(1000):
             x = np.reshape(pattern, (-1, seq_length, 1))
             x = torch.as_tensor(x, dtype=torch.int64).to(device=device)
-            out = model(x).view(n_vocab)
+            out = model(x).view(model.nb_classes)
             probs = torch.nn.functional.softmax(out, 0)
             index = np.random.choice(np.arange(0, model.nb_classes), p=probs.numpy())
             result = model.glove.itos[index].to(device='cpu')
@@ -112,4 +112,4 @@ if __name__ == "__main__":
             pattern.append(index)
             pattern = pattern[1:len(pattern)]
         print("\nDone.")
-        generated_text = ''.join(generated_text)
+        generated_text = ' '.join(generated_text)
