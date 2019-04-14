@@ -8,6 +8,36 @@ import configparser
 import sys
 
 
+def predict_bleu(model, pattern, seq_length, device, int_to_char, fics, character_level=False):
+    """
+    Generate text and compute BLEU
+    """
+    nb_classes = len(int_to_char)
+    with torch.no_grad():
+        generated_text = []
+        for i in range(1000):
+            x = np.reshape(pattern, (-1, seq_length, 1))
+            x = torch.as_tensor(x, dtype=torch.int64).to(device=device)
+            out = model(x).view(nb_classes)
+            # index = np.argmax(out).item() # read value of 1d tensor
+            # print(out.shape)
+            # print(out)
+            # top_indexes = torch.topk(out, 5, largest=True)
+            probs = torch.nn.functional.softmax(out, 0)
+            # index = np.random.choice(top_indexes[1])
+            index = np.random.choice(
+                np.arange(0, nb_classes), p=probs.to(device='cpu').numpy())
+            result = int_to_char[index]
+            generated_text.append(result)
+            seq_in = [int_to_char[value.item()] for value in pattern]
+            pattern.append(index)
+            pattern = pattern[1:len(pattern)]
+        generated_text = ' '.join(generated_text)
+        print(generated_text)
+        return generated_text, compute_bleu(fics, generated_text, character_level)
+
+
+
 if __name__ == "__main__":
     from word_lstm import LSTMWordNet
 
