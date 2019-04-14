@@ -36,7 +36,7 @@ if __name__ == "__main__":
         fics = pickle.load(file)
         fics = [fics[4]]  # begin with only this much
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = 'cpu'
     print(f'Device being used is {device}')
 
     total_loss = []
@@ -96,6 +96,8 @@ if __name__ == "__main__":
         file_name, map_location=lambda storage, loc: storage))
     model.eval()
 
+    nb_classes = model.nb_classes.cpu()
+
     with torch.no_grad():
         # generate characters
         generated_text = []
@@ -104,7 +106,7 @@ if __name__ == "__main__":
             x = torch.as_tensor(x, dtype=torch.int64).to(device=device)
             out = model(x).view(model.nb_classes)
             probs = torch.nn.functional.softmax(out, 0)
-            index = np.random.choice(np.arange(0, model.nb_classes), p=probs.numpy())
+            index = np.random.choice(np.arange(0, nb_classes), p=probs.numpy())
             result = model.glove.itos[index].to(device='cpu')
             generated_text.append(result)
             seq_in = [model.glove.itos[value] for value in pattern]
