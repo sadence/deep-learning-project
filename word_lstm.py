@@ -134,14 +134,14 @@ if __name__ == "__main__":
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f} ({:.2f} s)'
                       .format(epoch+1, config['num_epochs'], i+1, total_step,
                               loss.item(), time.time()-start))
-        # start = np.random.randint(0, len(dataX)-1)
-        # pattern = list(dataX[start])
-        # gen_text, bleu = predict_bleu(
-        #     model, pattern, seq_length, device, int_to_char, fics, character_level=False)
-        # bleu_scores.append(bleu)
+        start = np.random.randint(0, len(dataX)-1)
+        pattern = list(dataX[start])
+        gen_text, bleu = predict_bleu(
+            model, pattern, seq_length, device, int_to_char, fics, character_level=False)
+        bleu_scores.append(bleu)
         total_loss.append(epoch_loss / total_step)
         print(f'Loss for the epoch: {epoch_loss / total_step}')
-        # print(f'One BLEU score: {bleu}')
+        print(f'One BLEU score: {bleu}')
 
     print(f"Loss for each epoch: {total_loss}")
     # print(f"One bleu score for each epoch: {bleu_scores}")
