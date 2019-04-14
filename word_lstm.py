@@ -55,7 +55,7 @@ if __name__ == "__main__":
     # Load Fanfics, 49999 in total
     with open("./fics-processed.pkl", "rb") as file:
         fics = pickle.load(file)
-        fics = [fics[4]]  # begin with only this much
+        fics = fics[:3]  # begin with only this much
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Device being used is {device}')
