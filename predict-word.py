@@ -101,11 +101,11 @@ if __name__ == "__main__":
         generated_text = []
         for i in range(1000):
             x = np.reshape(pattern, (-1, seq_length, 1))
-            x = torch.as_tensor(x, dtype=torch.int64)
+            x = torch.as_tensor(x, dtype=torch.int64).to(device=device)
             out = model(x).view(n_vocab)
             probs = torch.nn.functional.softmax(out, 0)
             index = np.random.choice(np.arange(0, model.nb_classes), p=probs.numpy())
-            result = model.glove.itos[index]
+            result = model.glove.itos[index].to(device='cpu')
             generated_text.append(result)
             seq_in = [model.glove.itos[value] for value in pattern]
             sys.stdout.write(result)
