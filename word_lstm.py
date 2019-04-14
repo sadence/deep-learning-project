@@ -7,6 +7,8 @@ import torchtext
 import numpy as np
 import time
 
+from predict_word import predict_bleu
+
 config = configparser.ConfigParser()
 config.read("config.ini")
 
@@ -14,7 +16,6 @@ config = config["WORD-LSTM"]
 
 seq_length = int(config["seq_length"])
 batch_size = int(config["batch_size"])
-input_size = 300
 hidden_size = int(config["hidden_size"])
 num_layers = int(config["num_layers"])
 num_epochs = int(config["num_epochs"])
@@ -23,21 +24,22 @@ dropout = float(config["dropout"])
 
 
 class LSTMWordNet(nn.Module):
-    def __init__(self, in_size, hidden_size, nb_layer, device, dropout):
+    def __init__(self, hidden_size, nb_layer, device, dropout):
         super(LSTMWordNet, self).__init__()
         self.hidden_size = hidden_size
         self.nb_layer = nb_layer
         self.glove = torchtext.vocab.GloVe(name='6B') # defqult dim is 300
         self.nb_classes = len(self.glove.itos)
         self.emb = nn.Embedding.from_pretrained(self.glove.vectors, freeze=True, sparse=False)
+        self.lstm_input = len(self.glove.vectors[0])
         self.lstm = nn.LSTM(
-            in_size, hidden_size, nb_layer, batch_first=True, dropout=dropout
+            self.lstm_input, hidden_size, nb_layer, batch_first=True, dropout=dropout
         )
         self.fc = nn.Linear(hidden_size, self.nb_classes)
         self.device = device
 
     def forward(self, x, batch_size=config["batch_size"]):
-        x = self.emb(x).view(-1, seq_length, input_size)
+        x = self.emb(x).view(-1, seq_length, self.lstm_input)
         h0 = torch.zeros(self.nb_layer, x.size(0), self.hidden_size).to(self.device)
         c0 = torch.zeros(self.nb_layer, x.size(0), self.hidden_size).to(self.device)
         out, _ = self.lstm(x, (h0, c0))
@@ -55,7 +57,7 @@ if __name__ == "__main__":
     # Load Fanfics, 49999 in total
     with open("./fics-processed.pkl", "rb") as file:
         fics = pickle.load(file)
-        fics = [fics[4]]  # begin with only this much
+        fics = fics[:3]  # begin with only this much
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Device being used is {device}')
@@ -63,7 +65,7 @@ if __name__ == "__main__":
     total_loss = []
     bleu_scores = []
 
-    model = LSTMWordNet(input_size, hidden_size, num_layers, device, dropout).to(device)
+    model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)
 
 
     # Prepare Training Data
@@ -85,7 +87,6 @@ if __name__ == "__main__":
                 dataX.append(x)
                 dataY.append(y)
             except KeyError:
-                print(seq_in)
                 errors+=1
 
 
@@ -134,14 +135,14 @@ if __name__ == "__main__":
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f} ({:.2f} s)'
                       .format(epoch+1, config['num_epochs'], i+1, total_step,
                               loss.item(), time.time()-start))
-        # start = np.random.randint(0, len(dataX)-1)
-        # pattern = list(dataX[start])
-        # gen_text, bleu = predict_bleu(
-        #     model, pattern, seq_length, device, int_to_char, fics, character_level=False)
-        # bleu_scores.append(bleu)
+        start_ = np.random.randint(0, len(dataX)-1)
+        pattern = list(dataX[start_])
+        gen_text, bleu = predict_bleu(
+            model, pattern, seq_length, device, model.glove.itos, fics, character_level=False)
+        bleu_scores.append(bleu)
         total_loss.append(epoch_loss / total_step)
         print(f'Loss for the epoch: {epoch_loss / total_step}')
-        # print(f'One BLEU score: {bleu}')
+        print(f'One BLEU score: {bleu}')
 
     print(f"Loss for each epoch: {total_loss}")
     # print(f"One bleu score for each epoch: {bleu_scores}")
