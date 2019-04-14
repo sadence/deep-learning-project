@@ -31,7 +31,6 @@ def mean_bleu(n, weights, model, seq_length, device, int_to_char, fics, characte
                 dataX.append(x)
                 dataY.append(y)
             except KeyError:
-                print(seq_in)
                 errors+=1
 
 
