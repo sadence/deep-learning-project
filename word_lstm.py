@@ -31,7 +31,7 @@ dropout = float(config["dropout"])
 
 
 class BengioNet(nn.Module):
-    def __init__(self, hidden_size, nb_layer, device, dropout, direct=True):
+    def __init__(self, hidden_size, nb_layer, device, dropout):
         super(BengioNet, self).__init__()
         self.hidden_size = hidden_size
         self.nb_layer = nb_layer
@@ -41,18 +41,13 @@ class BengioNet(nn.Module):
         self.emb = nn.Embedding.from_pretrained(self.glove.vectors, freeze=True, sparse=False)
         self.fc1 = nn.Linear(self.dim, hidden_size)
         self.fc2 = nn.Linear(hidden_size, self.nb_classes)
-        self.direct = direct
-        if direct:
-            self.fc_direct = nn.Linear(self.dim, self.nb_classes)
+
         self.device = device
 
     def forward(self, x, batch_size=config["batch_size"]):
         x = self.emb(x).view(-1, seq_length, self.dim)
         out1 = torch.tanh(self.fc1(x)) #.view(-1, seq_length, self.hidden_size)
         out2 = self.fc2(out1[:, -1, :])
-        if self.direct:
-            out_direct = self.fc_direct(x)
-            out2 += out_direct
         return out2
 
 class LSTMWordNet(nn.Module):
