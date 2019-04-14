@@ -81,7 +81,7 @@ def predict_bleu(weights, model, pattern, seq_length, device, int_to_char, fics,
 
 
 if __name__ == "__main__":
-    from word_lstm import LSTMWordNet
+    from word_lstm import LSTMWordNet, BengioNet
 
     config = configparser.ConfigParser()
     config.read("config.ini")
@@ -116,8 +116,8 @@ if __name__ == "__main__":
 
     total_loss = []
     bleu_scores = []
-    
-    if sys.argv[1] == "bengio":
+
+    if len(sys.argv) > 1 and sys.argv[1] == "bengio":
         model = BengioNet(hidden_size, num_layers, device, dropout).to(device)
     else:
         model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)

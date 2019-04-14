@@ -43,14 +43,14 @@ class BengioNet(nn.Module):
         self.fc2 = nn.Linear(hidden_size, self.nb_classes)
         self.direct = direct
         if direct:
-            self.fc_direct = nn.Linear(self.nb_classes, self.nb_classes)
+            self.fc_direct = nn.Linear(self.dim, self.nb_classes)
         self.device = device
 
     def forward(self, x, batch_size=config["batch_size"]):
         x = self.emb(x).view(-1, seq_length, self.dim)
         out1 = torch.tanh(self.fc1(x)) #.view(-1, seq_length, self.hidden_size)
         out2 = self.fc2(out1[:, -1, :])
-        if direct:
+        if self.direct:
             out_direct = self.fc_direct(x)
             out2 += out_direct
         return out2
