@@ -176,7 +176,9 @@ if __name__ == "__main__":
     print(f"Loss for each epoch: {total_loss}")
     # print(f"One bleu score for each epoch: {bleu_scores}")
 
-    file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
+    net = sys.argv[1] if len(sys.argv) > 1 else "lstm"
+
+    file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
         config['seq_length'],
         config['batch_size'],
         config['input_size'],
@@ -184,7 +186,8 @@ if __name__ == "__main__":
         config['num_layers'],
         config['num_epochs'],
         config['learning_rate'],
-        config['dropout']
+        config['dropout'],
+        net
     )
 
     torch.save(model.state_dict(), file_name)
