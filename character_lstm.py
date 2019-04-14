@@ -167,10 +167,10 @@ if __name__ == "__main__":
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f} ({:.2f} s)'
                       .format(epoch+1, CONFIG['num_epochs'], i+1, total_step,
                               loss.item(), time.time()-start))
-        start = np.random.randint(0, len(dataX)-1)
-        pattern = list(dataX[start])
-        gen_text, bleu = mean_bleu(
-            10, BLEU_WEIGHTS, model, pattern, seq_length, device, int_to_char, fics, character_level=False)
+
+        bleu = mean_bleu(
+            10, BLEU_WEIGHTS, model, seq_length, device, int_to_char,
+            char_to_int, fics, character_level=False)
         bleu_scores.append(bleu)
         total_loss.append(epoch_loss / total_step)
         print(f'Loss for the epoch: {epoch_loss / total_step}')

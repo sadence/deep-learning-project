@@ -7,7 +7,7 @@ import torchtext
 import numpy as np
 import time
 
-from predict_word import predict_bleu
+from predict_word import mean_bleu, BLEU_WEIGHTS
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -137,8 +137,8 @@ if __name__ == "__main__":
                               loss.item(), time.time()-start))
         start_ = np.random.randint(0, len(dataX)-1)
         pattern = list(dataX[start_])
-        gen_text, bleu = predict_bleu(
-            model, pattern, seq_length, device, model.glove.itos, fics, character_level=False)
+        gen_text, bleu = mean_bleu(
+            10, BLEU_WEIGHTS, model, seq_length, device, model.glove.itos, fics, character_level=False)
         bleu_scores.append(bleu)
         total_loss.append(epoch_loss / total_step)
         print(f'Loss for the epoch: {epoch_loss / total_step}')

@@ -17,6 +17,7 @@ def to_one_hot(i, total_classes):
 
 def mean_bleu(n, weights, model, seq_length, device, int_to_char, char_to_int, fics, character_level=False):
     n_chars = 0
+    n_vocab = len(char_to_int)
     # Prepare Training Data
     dataX = []
     dataY = []
