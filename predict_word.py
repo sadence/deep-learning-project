@@ -101,7 +101,6 @@ if __name__ == "__main__":
                 dataX.append(x)
                 dataY.append(y)
             except KeyError:
-                print(seq_in)
                 errors+=1
 
 
