@@ -86,7 +86,11 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read("config.ini")
 
-    config = config["WORD-LSTM"]
+    if sys.argv[1] == "bengio":
+        config = config["BENGIO"]
+    else:
+        config = config["WORD-LSTM"]
+
 
     seq_length = int(config["seq_length"])
     batch_size = int(config["batch_size"])
@@ -112,8 +116,11 @@ if __name__ == "__main__":
 
     total_loss = []
     bleu_scores = []
-
-    model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)
+    
+    if sys.argv[1] == "bengio":
+        model = BengioNet(hidden_size, num_layers, device, dropout).to(device)
+    else:
+        model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)
 
     
     # Prepare Training Data

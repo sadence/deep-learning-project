@@ -2,17 +2,24 @@ import pickle
 import configparser
 
 from torch import nn
+import torch.nn.functional as F
 import torch
 import torchtext
 import numpy as np
 import time
+import sys
 
 from predict_word import mean_bleu, BLEU_WEIGHTS
 
 config = configparser.ConfigParser()
 config.read("config.ini")
 
-config = config["WORD-LSTM"]
+
+if sys.argv[1] == "bengio":
+    config = config["BENGIO"]
+else:
+    config = config["WORD-LSTM"]
+
 
 seq_length = int(config["seq_length"])
 batch_size = int(config["batch_size"])
@@ -22,6 +29,31 @@ num_epochs = int(config["num_epochs"])
 learning_rate = float(config["learning_rate"])
 dropout = float(config["dropout"])
 
+
+class BengioNet(nn.Module):
+    def __init__(self, hidden_size, nb_layer, device, dropout, direct=True):
+        super(BengioNet, self).__init__()
+        self.hidden_size = hidden_size
+        self.nb_layer = nb_layer
+        self.glove = torchtext.vocab.GloVe(name='6B') # defqult dim is 300
+        self.nb_classes = len(self.glove.itos)
+        self.dim = len(self.glove.vectors[0])
+        self.emb = nn.Embedding.from_pretrained(self.glove.vectors, freeze=True, sparse=False)
+        self.fc1 = nn.Linear(self.dim, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, self.nb_classes)
+        self.direct = direct
+        if direct:
+            self.fc_direct = nn.Linear(self.nb_classes, self.nb_classes)
+        self.device = device
+
+    def forward(self, x, batch_size=config["batch_size"]):
+        x = self.emb(x).view(-1, seq_length, self.dim)
+        out1 = torch.tanh(self.fc1(x)) #.view(-1, seq_length, self.hidden_size)
+        out2 = self.fc2(out1[:, -1, :])
+        if direct:
+            out_direct = self.fc_direct(x)
+            out2 += out_direct
+        return out2
 
 class LSTMWordNet(nn.Module):
     def __init__(self, hidden_size, nb_layer, device, dropout):
@@ -65,8 +97,10 @@ if __name__ == "__main__":
     total_loss = []
     bleu_scores = []
 
-    model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)
-
+    if sys.argv[1] == "bengio":
+        model = BengioNet(hidden_size, num_layers, device, dropout).to(device)
+    else:
+        model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)
 
     # Prepare Training Data
     dataX = []
@@ -147,7 +181,9 @@ if __name__ == "__main__":
     print(f"Loss for each epoch: {total_loss}")
     # print(f"One bleu score for each epoch: {bleu_scores}")
 
-    file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
+    net = sys.argv[1] if len(sys.argv) > 1 else "lstm"
+
+    file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
         config['seq_length'],
         config['batch_size'],
         config['input_size'],
@@ -155,7 +191,8 @@ if __name__ == "__main__":
         config['num_layers'],
         config['num_epochs'],
         config['learning_rate'],
-        config['dropout']
+        config['dropout'],
+        net
     )
 
     torch.save(model.state_dict(), file_name)
