@@ -59,7 +59,7 @@ if __name__ == "__main__":
             seq_in = fic_arr[i: i + seq_length]
             seq_out = fic_arr[i + seq_length]
             try:   
-                x = [model.glove.stoi[word] for word in seq_in]
+                x = [model.glove.ito[word] for word in seq_in]
                 y = model.glove.stoi[seq_out]
                 dataX.append(x)
                 dataY.append(y)
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     start = np.random.randint(0, len(dataX)-1)
     pattern = list(dataX[start])
     print("Seed:")
-    print(''.join([model.glove.stoi[value] for value in pattern]))
+    print(''.join([model.glove.itos[value] for value in pattern]))
 
     file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
         config['seq_length'],
