@@ -41,11 +41,15 @@ def mean_bleu(n, weights, model, seq_length, device, int_to_char, fics, characte
     dataX = np.array(dataX)
 
     bleus = []
-    for _ in range(0, n):
+    for i in range(0, n):
         start = np.random.randint(0, len(dataX)-1)
         pattern = list(dataX[start])
-        _, bleu = predict_bleu(
+        gen_text, bleu = predict_bleu(
             weights, model, pattern, seq_length, device, int_to_char, fics, character_level=False)
+        if i == 0:
+            print("Seed:")
+            print(' '.join([model.glove.itos[value] for value in pattern]))
+            print(gen_text)
         bleus.append(bleu)
     return mean(bleus)
 
@@ -74,7 +78,6 @@ def predict_bleu(weights, model, pattern, seq_length, device, int_to_char, fics,
             pattern.append(index)
             pattern = pattern[1:len(pattern)]
         generated_text = ' '.join(generated_text)
-        print(generated_text)
         return generated_text, compute_bleu(weights, fics, generated_text, character_level)
 
 
@@ -120,41 +123,6 @@ if __name__ == "__main__":
         model = BengioNet(hidden_size, num_layers, device, dropout).to(device)
     else:
         model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)
-
-    
-    # Prepare Training Data
-    dataX = []
-    dataY = []
-
-    errors = 0
-
-    # TODO: instead of raw body, sanitize the data
-    for j, fic in enumerate(fics):
-        fic_arr = fic.body.split()
-        print(f"Building samples {j}, {len(fic.body)}")
-        for i in range(0, len(fic_arr) - seq_length, 1):
-            seq_in = fic_arr[i: i + seq_length]
-            seq_out = fic_arr[i + seq_length]
-            try:   
-                x = [model.glove.stoi[word] for word in seq_in]
-                y = model.glove.stoi[seq_out]
-                dataX.append(x)
-                dataY.append(y)
-            except KeyError:
-                errors+=1
-
-
-    n_patters = len(dataX)
-    print(f"Total patterns: {n_patters}")
-    print(f'errors: {errors}')
-
-    dataX = np.array(dataX)
-
-
-    start = np.random.randint(0, len(dataX)-1)
-    pattern = list(dataX[start])
-    print("Seed:")
-    print(' '.join([model.glove.itos[value] for value in pattern]))
 
     file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
         config['seq_length'],

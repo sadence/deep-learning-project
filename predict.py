@@ -44,8 +44,12 @@ def mean_bleu(n, weights, model, seq_length, device, int_to_char, char_to_int, f
     for _ in range(0, n):
         start = np.random.randint(0, len(dataX)-1)
         pattern = list(dataX[start])
-        _, bleu = predict_bleu(
+        gen_text, bleu = predict_bleu(
             weights, model, pattern, seq_length, device, int_to_char, fics, character_level=False)
+        if i == 0:
+            print("Seed:")
+            print(''.join([int_to_char[value] for value in pattern]))
+            print(gen_text)
         bleus.append(bleu)
     return mean(bleus)
 
@@ -114,33 +118,6 @@ if __name__ == "__main__":
     n_chars = 0
 
     print(f"Total Vocabulary: {n_vocab} words: \n{chars}")
-
-    # Prepare Training Data
-    dataX = []
-    dataY = []
-
-    # TODO: instead of raw body, sanitize the data
-    for j, fic in enumerate(fics):
-        print(f"Building samples {j}, {len(fic.body)}")
-        n_chars += len(fic.body)
-        for i in range(0, len(fic.body) - seq_length, 1):
-            seq_in = fic.body[i: i + seq_length]
-            seq_out = fic.body[i + seq_length]
-            dataX.append([char_to_int[char] for char in seq_in])
-            dataY.append(char_to_int[seq_out])
-
-    n_patters = len(dataX)
-    print(f"Total patterns: {n_patters}")
-
-    y = to_one_hot(dataY, n_vocab)
-
-    dataX = np.array(dataX)
-    # dataX = torch.as_tensor(dataX, dtype=torch.float)
-
-    start = np.random.randint(0, len(dataX)-1)
-    pattern = list(dataX[start])
-    print("Seed:")
-    print(''.join([int_to_char[value] for value in pattern]))
 
     model = LSTMNet(input_size, hidden_size, num_layers,
                     n_vocab, seq_length, 'cpu', dropout)
