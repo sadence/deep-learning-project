@@ -171,7 +171,7 @@ if __name__ == "__main__":
                               loss.item(), time.time()-start))
         start_ = np.random.randint(0, len(dataX)-1)
         pattern = list(dataX[start_])
-        gen_text, bleu = mean_bleu(
+        bleu = mean_bleu(
             10, BLEU_WEIGHTS, model, seq_length, device, model.glove.itos, fics, character_level=False)
         bleu_scores.append(bleu)
         total_loss.append(epoch_loss / total_step)
