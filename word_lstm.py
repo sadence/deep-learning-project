@@ -94,8 +94,10 @@ if __name__ == "__main__":
 
     if sys.argv[1] == "bengio":
         model = BengioNet(hidden_size, num_layers, device, dropout).to(device)
+        print("using bengio net")
     else:
         model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)
+        print("using lstm net")
 
     # Prepare Training Data
     dataX = []
@@ -167,7 +169,7 @@ if __name__ == "__main__":
         start_ = np.random.randint(0, len(dataX)-1)
         pattern = list(dataX[start_])
         bleu = mean_bleu(
-            10, BLEU_WEIGHTS, model, seq_length, device, model.glove.itos, fics, character_level=False)
+            3, BLEU_WEIGHTS, model, seq_length, device, model.glove.itos, fics, character_level=False)
         bleu_scores.append(bleu)
         total_loss.append(epoch_loss / total_step)
         print(f'Loss for the epoch: {epoch_loss / total_step}')
