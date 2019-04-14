@@ -18,7 +18,6 @@ if __name__ == "__main__":
 
     seq_length = int(config["seq_length"])
     batch_size = int(config["batch_size"])
-    input_size = 300
     hidden_size = int(config["hidden_size"])
     num_layers = int(config["num_layers"])
     num_epochs = int(config["num_epochs"])
