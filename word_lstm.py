@@ -7,6 +7,8 @@ import torchtext
 import numpy as np
 import time
 
+from predict import predict_bleu
+
 config = configparser.ConfigParser()
 config.read("config.ini")
 
