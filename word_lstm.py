@@ -14,7 +14,12 @@ from predict_word import predict_bleu
 config = configparser.ConfigParser()
 config.read("config.ini")
 
-config = config["WORD-LSTM"]
+
+if sys.argv[1] == "bengio":
+    config = config["BENGIO"]
+else:
+    config = config["WORD-LSTM"]
+
 
 seq_length = int(config["seq_length"])
 batch_size = int(config["batch_size"])
@@ -79,7 +84,7 @@ if __name__ == "__main__":
     # Load Fanfics, 49999 in total
     with open("./fics-processed.pkl", "rb") as file:
         fics = pickle.load(file)
-        fics = fics[4:5]  # begin with only this much
+        fics = fics[:3]  # begin with only this much
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Device being used is {device}')
