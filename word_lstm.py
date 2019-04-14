@@ -110,14 +110,14 @@ if __name__ == "__main__":
 
     train_loader = torch.utils.data.DataLoader(
         dataset=dataset,
-        batch_size=config['batch_size'],
+        batch_size=batch_size,
         shuffle=True)
 
     # training
     total_step = len(train_loader)
     start = time.time()
 
-    for epoch in range(config['num_epochs']):
+    for epoch in range(num_epochs):
         epoch_loss = 0
         for i, (seq, lab) in enumerate(train_loader):
 
@@ -141,10 +141,10 @@ if __name__ == "__main__":
         # bleu_scores.append(bleu)
         total_loss.append(epoch_loss / total_step)
         print(f'Loss for the epoch: {epoch_loss / total_step}')
-        print(f'One BLEU score: {bleu}')
+        # print(f'One BLEU score: {bleu}')
 
     print(f"Loss for each epoch: {total_loss}")
-    print(f"One bleu score for each epoch: {bleu_scores}")
+    # print(f"One bleu score for each epoch: {bleu_scores}")
 
     file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
         config['seq_length'],
