@@ -77,9 +77,11 @@ if __name__ == "__main__":
         for i in range(0, len(fic_arr) - seq_length, 1):
             seq_in = fic_arr[i: i + seq_length]
             seq_out = fic_arr[i + seq_length]
-            try: 
-                dataX.append([model.glove.stoi[word] for word in seq_in])
-                dataY.append(model.glove.stoi[seq_out])
+            try:   
+                x = [model.glove.stoi[word] for word in seq_in])
+                y = model.glove.stoi[seq_out]
+                dataX.append(x)
+                dataY.append(y)
             except KeyError:
                 print(seq_in)
 
