@@ -96,7 +96,7 @@ if __name__ == "__main__":
         file_name, map_location=lambda storage, loc: storage))
     model.eval()
 
-    nb_classes = model.nb_classes.cpu()
+    nb_classes = model.nb_classes
 
     with torch.no_grad():
         # generate characters
@@ -107,7 +107,7 @@ if __name__ == "__main__":
             out = model(x).view(model.nb_classes)
             probs = torch.nn.functional.softmax(out, 0)
             index = np.random.choice(np.arange(0, nb_classes), p=probs.numpy())
-            result = model.glove.itos[index].to(device='cpu')
+            result = model.glove.itos[index]
             generated_text.append(result)
             seq_in = [model.glove.itos[value] for value in pattern]
             sys.stdout.write(result)
