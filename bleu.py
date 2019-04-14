@@ -7,6 +7,7 @@ import os
 import math
 import operator
 import json
+import numpy as np
 from functools import reduce
 
 
@@ -116,12 +117,16 @@ def best_length_match(ref_l, cand_l):
 #         bp = math.exp(1-(float(r)/c))
 #     return bp
 
-
 def geometric_mean(precisions):
     return (reduce(operator.mul, precisions)) ** (1.0 / len(precisions))
 
+# geometric mean with weights
+def geo_mean_overflow(weights, precisions):
+    w = np.array(weights)
+    a = np.prod(np.power(precisions, w))
+    return np.power(a, np.divide(1, w.sum()))
 
-def BLEU(candidate, references, character_level):
+def BLEU(weights, candidate, references, character_level):
     precisions = []
     max_ngrams = 4  # normally 4
     for i in range(max_ngrams):
@@ -129,12 +134,11 @@ def BLEU(candidate, references, character_level):
         precisions.append(pr)
     # We do not take into account the brevity precision
     print(precisions)
-    bleu = geometric_mean(precisions)
-    # is 0.0: Warum ?
+    bleu = geo_mean_overflow(weights, precisions)
     return bleu
 
 
-def compute_bleu(fics, generated_text, character_level=True):
+def compute_bleu(weights, fics, generated_text, character_level=True):
     '''Compute BLEU score.
 
     Arguments:
@@ -146,7 +150,7 @@ def compute_bleu(fics, generated_text, character_level=True):
     '''
 
     candidate, references = fetch_data(fics, generated_text)
-    bleu = BLEU(candidate, references, character_level)
+    bleu = BLEU(weights, candidate, references, character_level)
     return bleu
 
 
@@ -154,12 +158,12 @@ if __name__ == "__main__":
     # main deps
     import pickle
     from parse_fics import Fanfic
-
+    weights = [1, 1, 1, 1]
     with open("./fics.pkl", 'rb') as file:
         fics = pickle.load(file)
         fics = fics[:1]  # begin with only this much
     result = fics[0].body[:500]
     if len(sys.argv) > 1:
-        compute_bleu(fics, result, bool(sys.argv[1]))
+        compute_bleu(weights, fics, result, bool(sys.argv[1]))
     else:
-        compute_bleu(fics, result)
+        compute_bleu(weights, fics, result)

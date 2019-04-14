@@ -7,9 +7,53 @@ import numpy as np
 import pickle
 import configparser
 import sys
+from statistics import mean 
+
+BLEU_WEIGHTS = [0.25, 0.25, 0.25, 0.25]
+
+def mean_bleu(n, weights, model, seq_length, device, int_to_char, fics, character_level=False):
+    # Prepare Training Data
+    dataX = []
+    dataY = []
+
+    errors = 0
+
+    # TODO: instead of raw body, sanitize the data
+    for j, fic in enumerate(fics):
+        fic_arr = fic.body.split()
+        print(f"Building samples {j}, {len(fic.body)}")
+        for i in range(0, len(fic_arr) - seq_length, 1):
+            seq_in = fic_arr[i: i + seq_length]
+            seq_out = fic_arr[i + seq_length]
+            try:   
+                x = [model.glove.stoi[word] for word in seq_in]
+                y = model.glove.stoi[seq_out]
+                dataX.append(x)
+                dataY.append(y)
+            except KeyError:
+                errors+=1
 
 
-def predict_bleu(model, pattern, seq_length, device, int_to_char, fics, character_level=False):
+    n_patters = len(dataX)
+    print(f"Total patterns: {n_patters}")
+    print(f'errors: {errors}')
+
+    dataX = np.array(dataX)
+
+    bleus = []
+    for i in range(0, n):
+        start = np.random.randint(0, len(dataX)-1)
+        pattern = list(dataX[start])
+        gen_text, bleu = predict_bleu(
+            weights, model, pattern, seq_length, device, int_to_char, fics, character_level=False)
+        if i == 0:
+            print("Seed:")
+            print(' '.join([model.glove.itos[value] for value in pattern]))
+            print(gen_text)
+        bleus.append(bleu)
+    return mean(bleus)
+
+def predict_bleu(weights, model, pattern, seq_length, device, int_to_char, fics, character_level=False):
     """
     Generate text and compute BLEU
     """
@@ -34,8 +78,7 @@ def predict_bleu(model, pattern, seq_length, device, int_to_char, fics, characte
             pattern.append(index)
             pattern = pattern[1:len(pattern)]
         generated_text = ' '.join(generated_text)
-        print(generated_text)
-        return generated_text, compute_bleu(fics, generated_text, character_level)
+        return generated_text, compute_bleu(weights, fics, generated_text, character_level)
 
 
 
@@ -81,41 +124,6 @@ if __name__ == "__main__":
     else:
         model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)
 
-    
-    # Prepare Training Data
-    dataX = []
-    dataY = []
-
-    errors = 0
-
-    # TODO: instead of raw body, sanitize the data
-    for j, fic in enumerate(fics):
-        fic_arr = fic.body.split()
-        print(f"Building samples {j}, {len(fic.body)}")
-        for i in range(0, len(fic_arr) - seq_length, 1):
-            seq_in = fic_arr[i: i + seq_length]
-            seq_out = fic_arr[i + seq_length]
-            try:   
-                x = [model.glove.stoi[word] for word in seq_in]
-                y = model.glove.stoi[seq_out]
-                dataX.append(x)
-                dataY.append(y)
-            except KeyError:
-                errors+=1
-
-
-    n_patters = len(dataX)
-    print(f"Total patterns: {n_patters}")
-    print(f'errors: {errors}')
-
-    dataX = np.array(dataX)
-
-
-    start = np.random.randint(0, len(dataX)-1)
-    pattern = list(dataX[start])
-    print("Seed:")
-    print(' '.join([model.glove.itos[value] for value in pattern]))
-
     file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
         config['seq_length'],
         config['batch_size'],
@@ -135,20 +143,4 @@ if __name__ == "__main__":
     nb_classes = model.nb_classes
 
     with torch.no_grad():
-        # generate characters
-        generated_text = []
-        for i in range(1000):
-            x = np.reshape(pattern, (-1, seq_length, 1))
-            x = torch.as_tensor(x, dtype=torch.int64).to(device=device)
-            out = model(x).view(model.nb_classes)
-            probs = torch.nn.functional.softmax(out, 0).numpy()
-            probs = probs / probs.sum()
-            index = np.random.choice(np.arange(0, nb_classes), p=probs)
-            result = model.glove.itos[index]
-            generated_text.append(result)
-            seq_in = [model.glove.itos[value] for value in pattern]
-            pattern.append(index)
-            pattern = pattern[1:len(pattern)]
-        print("\nDone.")
-        generated_text = ' '.join(generated_text)
-        print(generated_text)
+        print(mean_bleu(10, BLEU_WEIGHTS, model, seq_length, 'cpu', model.glove.itos, fics))

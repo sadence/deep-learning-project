@@ -1,66 +1,69 @@
+"""This script generates a Character LSTM model from the first fanfic in fanfic.csv"""
+
 import pickle
 import configparser
+import time
 
 from torch import nn
 import torch
-import torchvision
+import torch.utils.data
 import numpy as np
-import time
-
+from predict import predict_bleu, BLEU_WEIGHTS, mean_bleu
 from parse_fics import Fanfic
-from predict import predict_bleu
 
-# Hyper params
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-config = dict(config['DEFAULT'])
-
-
-def num(s):
+def num(string):
+    """utility function for parsing a string to a number"""
     try:
-        return int(s)
+        return int(string)
     except ValueError:
-        return float(s)
+        return float(string)
 
+def to_one_hot(i, total_classes):
+    """utility function for getting a one hot vector from an ordinal"""
+    return np.eye(total_classes)[i]
 
-for key in config:
-    config[key] = num(config[key])
+CONFIG = configparser.ConfigParser()
+CONFIG.read('config.ini')
+CONFIG = dict(CONFIG['DEFAULT'])
 
+for key in CONFIG:
+    CONFIG[key] = num(CONFIG[key])
+
+FICS_PATH = "./fics.csv"
 
 class LSTMNet(torch.nn.Module):
+    """LSTMNet defines a character LSTM Network with options"""
 
-    def __init__(self, in_size, hidden_size, nb_layer, nb_classes, device, dropout):
+    def __init__(self, in_size, hidden_size, nb_layer, nb_classes, seq_length, device, dropout):
         super(LSTMNet, self).__init__()
         self.hidden_size = hidden_size
         self.nb_layer = nb_layer
         self.nb_classes = nb_classes
+        self.in_size = in_size
+        self.seq_length = seq_length
         self.emb = torch.nn.Embedding(nb_classes, in_size)
         self.lstm = torch.nn.LSTM(
             in_size, hidden_size, nb_layer, batch_first=True, dropout=dropout)
         self.fc = torch.nn.Linear(hidden_size, nb_classes)
         self.device = device
 
-    def forward(self, x, batch_size=config['batch_size']):
+    def forward(self, x):
         # print(f'x: {x.shape}')
         # -1 corresponds to batch size (but is smaller for last batch)
-        x = self.emb(x).view(-1, config['seq_length'], config['input_size'])
+        x = self.emb(x).view(-1, self.seq_length, self.in_size)
         # initial states
         # print(f'x: {x.shape}')
-        h0 = torch.zeros(self.nb_layer, x.size(
+        h_0 = torch.zeros(self.nb_layer, x.size(
             0), self.hidden_size).to(self.device)
-        c0 = torch.zeros(self.nb_layer, x.size(
+        c_0 = torch.zeros(self.nb_layer, x.size(
             0), self.hidden_size).to(self.device)
 
-        out, _ = self.lstm(x, (h0, c0))
+        out, _ = self.lstm(x, (h_0, c_0))
         out = self.fc(out[:, -1, :])
         return out
 
 
 if __name__ == "__main__":
-    def to_one_hot(i, total_classes):
-        return np.eye(total_classes)[i]
-
     fics = []
     chars = set()
     char_to_int = {}
@@ -86,7 +89,7 @@ if __name__ == "__main__":
     dataX = []
     dataY = []
 
-    seq_length = config['seq_length']
+    seq_length = CONFIG['seq_length']
 
     # TODO: instead of raw body, sanitize the data
     for j, fic in enumerate(fics):
@@ -123,24 +126,24 @@ if __name__ == "__main__":
     total_loss = []
     bleu_scores = []
 
-    model = LSTMNet(config['input_size'], config['hidden_size'], config['num_layers'],
-                    nb_classes, device, config['dropout']).to(device)
+    model = LSTMNet(CONFIG['input_size'], CONFIG['hidden_size'], CONFIG['num_layers'],
+                    nb_classes, seq_length, device, CONFIG['dropout']).to(device)
     # model = BiLSTMNet(input_size, hidden_size, num_layers, num_classes).to(device)
 
     optimizer = torch.optim.Adam(
-        model.parameters(), lr=config['learning_rate'])
+        model.parameters(), lr=CONFIG['learning_rate'])
     loss_fn = nn.CrossEntropyLoss()
 
     train_loader = torch.utils.data.DataLoader(
         dataset=dataset,
-        batch_size=config['batch_size'],
+        batch_size=CONFIG['batch_size'],
         shuffle=True)
 
     # training
     total_step = len(train_loader)
     start = time.time()
 
-    for epoch in range(config['num_epochs']):
+    for epoch in range(CONFIG['num_epochs']):
         epoch_loss = 0
         for i, (seq, lab) in enumerate(train_loader):
 
@@ -162,12 +165,12 @@ if __name__ == "__main__":
             epoch_loss += loss.item()
             if (i+1) % 100 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f} ({:.2f} s)'
-                      .format(epoch+1, config['num_epochs'], i+1, total_step,
+                      .format(epoch+1, CONFIG['num_epochs'], i+1, total_step,
                               loss.item(), time.time()-start))
-        start = np.random.randint(0, len(dataX)-1)
-        pattern = list(dataX[start])
-        gen_text, bleu = predict_bleu(
-            model, pattern, seq_length, device, int_to_char, fics, character_level=False)
+
+        bleu = mean_bleu(
+            10, BLEU_WEIGHTS, model, seq_length, device, int_to_char,
+            char_to_int, fics, character_level=False)
         bleu_scores.append(bleu)
         total_loss.append(epoch_loss / total_step)
         print(f'Loss for the epoch: {epoch_loss / total_step}')
@@ -177,14 +180,14 @@ if __name__ == "__main__":
     print(f"One bleu score for each epoch: {bleu_scores}")
 
     file_name = './model-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
-        config['seq_length'],
-        config['batch_size'],
-        config['input_size'],
-        config['hidden_size'],
-        config['num_layers'],
-        config['num_epochs'],
-        config['learning_rate'],
-        config['dropout']
+        CONFIG['seq_length'],
+        CONFIG['batch_size'],
+        CONFIG['input_size'],
+        CONFIG['hidden_size'],
+        CONFIG['num_layers'],
+        CONFIG['num_epochs'],
+        CONFIG['learning_rate'],
+        CONFIG['dropout']
     )
 
     torch.save(model.state_dict(), file_name)
