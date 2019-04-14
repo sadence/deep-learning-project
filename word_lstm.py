@@ -70,6 +70,8 @@ if __name__ == "__main__":
     dataX = []
     dataY = []
 
+    errors = 0
+
     # TODO: instead of raw body, sanitize the data
     for j, fic in enumerate(fics):
         fic_arr = fic.body.split()
@@ -78,16 +80,18 @@ if __name__ == "__main__":
             seq_in = fic_arr[i: i + seq_length]
             seq_out = fic_arr[i + seq_length]
             try:   
-                x = [model.glove.stoi[word] for word in seq_in])
+                x = [model.glove.stoi[word] for word in seq_in]
                 y = model.glove.stoi[seq_out]
                 dataX.append(x)
                 dataY.append(y)
             except KeyError:
                 print(seq_in)
+                errors++
 
 
     n_patters = len(dataX)
     print(f"Total patterns: {n_patters}")
+    print(f'errors: {errors}')
 
     dataX = np.array(dataX)
     dataX = torch.as_tensor(dataX, dtype=torch.int64)
