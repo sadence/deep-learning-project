@@ -23,7 +23,7 @@ dropout = float(config["dropout"])
 
 
 class LSTMWordNet(nn.Module):
-    def __init__(self, in_size, hidden_size, nb_layer, device, dropout):
+    def __init__(self, hidden_size, nb_layer, device, dropout):
         super(LSTMWordNet, self).__init__()
         self.hidden_size = hidden_size
         self.nb_layer = nb_layer
@@ -31,7 +31,7 @@ class LSTMWordNet(nn.Module):
         self.nb_classes = len(self.glove.itos)
         self.emb = nn.Embedding.from_pretrained(self.glove.vectors, freeze=True, sparse=False)
         self.lstm = nn.LSTM(
-            in_size, hidden_size, nb_layer, batch_first=True, dropout=dropout
+            len(self.glove.vectors[0]), hidden_size, nb_layer, batch_first=True, dropout=dropout
         )
         self.fc = nn.Linear(hidden_size, self.nb_classes)
         self.device = device
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     total_loss = []
     bleu_scores = []
 
-    model = LSTMWordNet(input_size, hidden_size, num_layers, device, dropout).to(device)
+    model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)
 
 
     # Prepare Training Data
