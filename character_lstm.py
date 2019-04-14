@@ -8,7 +8,7 @@ from torch import nn
 import torch
 import torch.utils.data
 import numpy as np
-from predict import predict_bleu
+from predict import predict_bleu, BLEU_WEIGHTS, mean_bleu
 from parse_fics import Fanfic
 
 def num(string):
@@ -169,8 +169,8 @@ if __name__ == "__main__":
                               loss.item(), time.time()-start))
         start = np.random.randint(0, len(dataX)-1)
         pattern = list(dataX[start])
-        gen_text, bleu = predict_bleu(
-            model, pattern, seq_length, device, int_to_char, fics, character_level=False)
+        gen_text, bleu = mean_bleu(
+            10, BLEU_WEIGHTS, model, pattern, seq_length, device, int_to_char, fics, character_level=False)
         bleu_scores.append(bleu)
         total_loss.append(epoch_loss / total_step)
         print(f'Loss for the epoch: {epoch_loss / total_step}')
