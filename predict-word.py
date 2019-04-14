@@ -59,7 +59,7 @@ if __name__ == "__main__":
             seq_in = fic_arr[i: i + seq_length]
             seq_out = fic_arr[i + seq_length]
             try:   
-                x = [model.glove.ito[word] for word in seq_in]
+                x = [model.glove.stoi[word] for word in seq_in]
                 y = model.glove.stoi[seq_out]
                 dataX.append(x)
                 dataY.append(y)
