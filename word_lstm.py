@@ -77,8 +77,12 @@ if __name__ == "__main__":
         for i in range(0, len(fic_arr) - seq_length, 1):
             seq_in = fic_arr[i: i + seq_length]
             seq_out = fic_arr[i + seq_length]
-            dataX.append([model.glove.stoi[word] for word in seq_in])
-            dataY.append(model.glove.stoi[seq_out])
+            try: 
+                dataX.append([model.glove.stoi[word] for word in seq_in])
+                dataY.append(model.glove.stoi[seq_out])
+            except KeyError:
+                print(seq_in)
+
 
     n_patters = len(dataX)
     print(f"Total patterns: {n_patters}")
