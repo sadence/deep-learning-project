@@ -29,14 +29,15 @@ class LSTMWordNet(nn.Module):
         self.glove = torchtext.vocab.GloVe(name='6B') # defqult dim is 300
         self.nb_classes = len(self.glove.itos)
         self.emb = nn.Embedding.from_pretrained(self.glove.vectors, freeze=True, sparse=False)
+        self.lstm_input = len(self.glove.vectors[0])
         self.lstm = nn.LSTM(
-            len(self.glove.vectors[0]), hidden_size, nb_layer, batch_first=True, dropout=dropout
+            self.lstm_input, hidden_size, nb_layer, batch_first=True, dropout=dropout
         )
         self.fc = nn.Linear(hidden_size, self.nb_classes)
         self.device = device
 
     def forward(self, x, batch_size=config["batch_size"]):
-        x = self.emb(x).view(-1, seq_length, input_size)
+        x = self.emb(x).view(-1, seq_length, self.lstm_input)
         h0 = torch.zeros(self.nb_layer, x.size(0), self.hidden_size).to(self.device)
         c0 = torch.zeros(self.nb_layer, x.size(0), self.hidden_size).to(self.device)
         out, _ = self.lstm(x, (h0, c0))
