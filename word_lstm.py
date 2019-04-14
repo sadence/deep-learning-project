@@ -27,7 +27,7 @@ class LSTMWordNet(nn.Module):
         super(LSTMWordNet, self).__init__()
         self.hidden_size = hidden_size
         self.nb_layer = nb_layer
-        self.glove = torchtext.vocab.GloVe() # defqult dim is 300
+        self.glove = torchtext.vocab.GloVe(name='6B') # defqult dim is 300
         self.nb_classes = len(self.glove.itos)
         self.emb = nn.Embedding.from_pretrained(self.glove.vectors, freeze=True, sparse=False)
         self.lstm = nn.LSTM(
@@ -87,13 +87,12 @@ if __name__ == "__main__":
     n_patters = len(dataX)
     print(f"Total patterns: {n_patters}")
 
-    y = to_one_hot(dataY, model.nb_classes)
-
     dataX = np.array(dataX)
     dataX = torch.as_tensor(dataX, dtype=torch.int64)
 
-    y = torch.as_tensor(y, dtype=torch.int64)
+    dataY = np.array(dataY)
+    dataY = torch.as_tensor(dataY, dtype=torch.int64)
 
-    dataset = torch.utils.data.TensorDataset(dataX, y)
+    dataset = torch.utils.data.TensorDataset(dataX, dataY)
 
 
