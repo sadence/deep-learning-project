@@ -41,8 +41,8 @@ class BengioNet(nn.Module):
 
     def forward(self, x, batch_size=config["batch_size"]):
         x = self.emb(x).view(-1, seq_length, self.dim)
-        out1 = F.tanh(self.fc1(x)).view(-1, seq_length, self.hidden_size)
-        out2 = self.fc2(out2[:, -1, :])
+        out1 = torch.tanh(self.fc1(x)) #.view(-1, seq_length, self.hidden_size)
+        out2 = self.fc2(out1[:, -1, :])
         return out2
 
 class LSTMWordNet(nn.Module):
