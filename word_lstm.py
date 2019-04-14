@@ -70,8 +70,6 @@ if __name__ == "__main__":
     dataX = []
     dataY = []
 
-    seq_length = config['seq_length']
-
     # TODO: instead of raw body, sanitize the data
     for j, fic in enumerate(fics):
         fic_arr = fic.body.split()
