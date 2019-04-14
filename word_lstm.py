@@ -7,7 +7,7 @@ import torchtext
 import numpy as np
 import time
 
-from predict import predict_bleu
+from predict_word import predict_bleu
 
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -135,8 +135,8 @@ if __name__ == "__main__":
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f} ({:.2f} s)'
                       .format(epoch+1, config['num_epochs'], i+1, total_step,
                               loss.item(), time.time()-start))
-        start = np.random.randint(0, len(dataX)-1)
-        pattern = list(dataX[start])
+        start_ = np.random.randint(0, len(dataX)-1)
+        pattern = list(dataX[start_])
         gen_text, bleu = predict_bleu(
             model, pattern, seq_length, device, model.glove.itos, fics, character_level=False)
         bleu_scores.append(bleu)
