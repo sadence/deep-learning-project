@@ -42,7 +42,7 @@ if __name__ == "__main__":
     total_loss = []
     bleu_scores = []
 
-    model = LSTMWordNet(input_size, hidden_size, num_layers, device, dropout).to(device)
+    model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)
 
     
     # Prepare Training Data
