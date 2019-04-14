@@ -113,4 +113,5 @@ if __name__ == "__main__":
             pattern.append(index)
             pattern = pattern[1:len(pattern)]
         print("\nDone.")
-        print(generated_text = ' '.join(generated_text))
+        generated_text = ' '.join(generated_text)
+        print(generated_text)
