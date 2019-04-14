@@ -41,7 +41,7 @@ def mean_bleu(n, weights, model, seq_length, device, int_to_char, char_to_int, f
     # dataX = torch.as_tensor(dataX, dtype=torch.float)
 
     bleus = []
-    for _ in range(0, n):
+    for i in range(0, n):
         start = np.random.randint(0, len(dataX)-1)
         pattern = list(dataX[start])
         gen_text, bleu = predict_bleu(
