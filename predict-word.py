@@ -110,8 +110,7 @@ if __name__ == "__main__":
             result = model.glove.itos[index]
             generated_text.append(result)
             seq_in = [model.glove.itos[value] for value in pattern]
-            sys.stdout.write(result)
             pattern.append(index)
             pattern = pattern[1:len(pattern)]
         print("\nDone.")
-        generated_text = ' '.join(generated_text)
+        print(generated_text = ' '.join(generated_text))
