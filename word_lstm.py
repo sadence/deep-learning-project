@@ -43,7 +43,7 @@ class BengioNet(nn.Module):
         self.fc2 = nn.Linear(hidden_size, self.nb_classes)
         self.direct = direct
         if direct:
-            self.fc_direct = nn.Linear(self.nb_classes, self.nb_classes)
+            self.fc_direct = nn.Linear(self.dim, self.nb_classes)
         self.device = device
 
     def forward(self, x, batch_size=config["batch_size"]):
