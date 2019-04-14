@@ -1,6 +1,7 @@
 import torch
 
 from parse_fics import Fanfic
+from bleu import compute_bleu
 
 import numpy as np
 import pickle
