@@ -86,7 +86,7 @@ if __name__ == "__main__":
                 dataY.append(y)
             except KeyError:
                 print(seq_in)
-                errors++
+                errors+=1
 
 
     n_patters = len(dataX)
@@ -100,5 +100,63 @@ if __name__ == "__main__":
     dataY = torch.as_tensor(dataY, dtype=torch.int64)
 
     dataset = torch.utils.data.TensorDataset(dataX, dataY)
+
+    total_loss = []
+    bleu_scores = []
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    loss_fn = nn.CrossEntropyLoss()
+
+    train_loader = torch.utils.data.DataLoader(
+        dataset=dataset,
+        batch_size=config['batch_size'],
+        shuffle=True)
+
+    # training
+    total_step = len(train_loader)
+    start = time.time()
+
+    for epoch in range(config['num_epochs']):
+        epoch_loss = 0
+        for i, (seq, lab) in enumerate(train_loader):
+
+            seq = seq.reshape(-1, seq_length, 1).to(device=device)
+            lab = lab.to(device)
+            outputs = model(seq)
+            loss = loss_fn(outputs, lab)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()
+            if (i+1) % 100 == 0:
+                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f} ({:.2f} s)'
+                      .format(epoch+1, config['num_epochs'], i+1, total_step,
+                              loss.item(), time.time()-start))
+        # start = np.random.randint(0, len(dataX)-1)
+        # pattern = list(dataX[start])
+        # gen_text, bleu = predict_bleu(
+        #     model, pattern, seq_length, device, int_to_char, fics, character_level=False)
+        # bleu_scores.append(bleu)
+        total_loss.append(epoch_loss / total_step)
+        print(f'Loss for the epoch: {epoch_loss / total_step}')
+        print(f'One BLEU score: {bleu}')
+
+    print(f"Loss for each epoch: {total_loss}")
+    print(f"One bleu score for each epoch: {bleu_scores}")
+
+    file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
+        config['seq_length'],
+        config['batch_size'],
+        config['input_size'],
+        config['hidden_size'],
+        config['num_layers'],
+        config['num_epochs'],
+        config['learning_rate'],
+        config['dropout']
+    )
+
+    torch.save(model.state_dict(), file_name)
 
 
