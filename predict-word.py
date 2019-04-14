@@ -105,8 +105,9 @@ if __name__ == "__main__":
             x = np.reshape(pattern, (-1, seq_length, 1))
             x = torch.as_tensor(x, dtype=torch.int64).to(device=device)
             out = model(x).view(model.nb_classes)
-            probs = torch.nn.functional.softmax(out, 0)
-            index = np.random.choice(np.arange(0, nb_classes), p=probs.numpy())
+            probs = torch.nn.functional.softmax(out, 0).numpy()
+            probs = probs / probs.sum()
+            index = np.random.choice(np.arange(0, nb_classes), p=probs)
             result = model.glove.itos[index]
             generated_text.append(result)
             seq_in = [model.glove.itos[value] for value in pattern]
