@@ -124,7 +124,9 @@ if __name__ == "__main__":
     else:
         model = LSTMWordNet(hidden_size, num_layers, device, dropout).to(device)
 
-    file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
+    net = sys.argv[1] if len(sys.argv) > 1 else "lstm"
+
+    file_name = './model-word-state-{}-{}-{}-{}-{}-{}-{}-{}-{}.torch'.format(
         config['seq_length'],
         config['batch_size'],
         config['input_size'],
@@ -132,7 +134,8 @@ if __name__ == "__main__":
         config['num_layers'],
         config['num_epochs'],
         config['learning_rate'],
-        config['dropout']
+        config['dropout'],
+        net
     )
 
     # open on cpu
