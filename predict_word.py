@@ -70,8 +70,10 @@ def predict_bleu(weights, model, pattern, seq_length, device, int_to_char, fics,
             # top_indexes = torch.topk(out, 5, largest=True)
             probs = torch.nn.functional.softmax(out, 0)
             # index = np.random.choice(top_indexes[1])
+            probs = probs.to(device='cpu').numpy()
+            probs = probs / probs.sum()
             index = np.random.choice(
-                np.arange(0, nb_classes), p=probs.to(device='cpu').numpy())
+                np.arange(0, nb_classes), p=probs)
             result = int_to_char[index]
             generated_text.append(result)
             seq_in = [int_to_char[value.item()] for value in pattern]
